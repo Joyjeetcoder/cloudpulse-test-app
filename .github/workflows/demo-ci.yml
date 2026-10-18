@@ -1,0 +1,37 @@
+name: CloudPulse Demo CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Failure scenario to demonstrate
+        type: choice
+        default: success
+        options:
+          - success
+          - test_failure
+          - missing_dependency
+          - syntax_error
+          - configuration_error
+permissions:
+  contents: read
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -r requirements-dev.txt
+      - name: Select demonstration
+        env:
+          REQUESTED_SCENARIO: ${{ inputs.scenario }}
+        run: python scenarios/select.py
+      - name: Run unit tests
+        run: python -m pytest -q
+      - name: Exercise dependency, syntax, or configuration scenario
+        run: python scenarios/exercise.py
